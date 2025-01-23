@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 """
-@Project ：bnTools 
+@Project ：bnTools
 @File    ：rate.py
 @Author  ：王金鹏
-@Date    ：2025/1/6 18:48 
+@Date    ：2025/1/6 18:48
 """
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Define price range and strategies
+# 定义到期实际价格范围 和 双币投资策略
 prices = list(range(98000, 100001, 500))
 strategies = {
     "99000 (APR 206%)": 206 / 365 / 100,
@@ -17,30 +17,32 @@ strategies = {
     "98000 (APR 103%)": 103 / 365 / 100,
 }
 principal = 10000  # Principal amount in USDT
+days = 4  # 控制收益天数的变量
 
-# Calculate daily returns and potential outcomes for each strategy
-data = []
-for price in prices:
-    row = {"Price (USDT)": price}
-    for strategy, apr in strategies.items():
-        target_price = int(strategy.split()[0])
-        daily_yield = principal * apr
+# 预计算每日收益率
+daily_yields = {}
+for strategy, apr in strategies.items():
+    daily_yield = principal * apr * days  # 收益 = 本金 * 日利率 * 天数
+    daily_yields[strategy] = daily_yield
+
+# 计算每种策略的每日收益率和潜在结果
+data = {"Price (USDT)": prices}
+for strategy, apr in strategies.items():
+    target_price = int(strategy.split()[0])
+    daily_yield = daily_yields[strategy]
+    returns = []
+    for price in prices:
         if price >= target_price:
-            # If price >= target_price, return principal + interest
             return_rate = ((principal + daily_yield) / principal - 1) * 100
-            row[strategy] = return_rate
         else:
-            # If price < target_price, calculate BTC amount bought and its market value
-            btc_bought = principal / target_price
+            btc_bought = principal / target_price  # 买入的比特币数量
             return_rate = ((btc_bought * price + daily_yield) / principal - 1) * 100
-            row[strategy] = return_rate  # Market value of BTC bought
-    data.append(row)
+        returns.append(return_rate)
+    data[strategy] = returns
 
 # Create DataFrame
 df = pd.DataFrame(data)
 print(df)
-
-
 
 # Plotting the results as line charts
 plt.figure(figsize=(10, 6))
